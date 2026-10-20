@@ -11,7 +11,7 @@ oc get podmonitors,servicemonitors -A | grep -i -E 'vllm|llama'
 oc get configmap user-workload-monitoring-config -n openshift-user-workload-monitoring
 ```
 
-> **Where are my monitors?** Do not expect them in `observability-hub`. A `PodMonitor` or `ServiceMonitor` can live in any namespace, so search all namespaces as above. In OpenShift **user workload monitoring** a monitor only scrapes pods and services in **its own namespace**: the `namespaceSelector` field is ignored (`oc get prometheus user-workload -n openshift-user-workload-monitoring -o jsonpath='{.spec.ignoreNamespaceSelectors}'` prints `true`). Namespaces labelled `openshift.io/cluster-monitoring=true` are skipped too. On the roadshow cluster the model runs in `llama-serving`, so its monitor must be created in `llama-serving`. A monitor anywhere else shows up in the list but scrapes nothing.
+> **Where are my monitors?** Do not expect them in `observability-hub`. A `PodMonitor` or `ServiceMonitor` can live in any namespace, so search all namespaces as above. A monitor only scrapes pods and services in **its own namespace** (user workload monitoring ignores `namespaceSelector`), so create it in the model's namespace; on the roadshow cluster that is `llama-serving`. Which Prometheus scrapes it depends on the namespace label: a namespace labelled `openshift.io/cluster-monitoring=true` (as `llama-serving` is) is scraped by the **platform** Prometheus in `openshift-monitoring`, and user workload monitoring skips it. So if the *user-workload* Prometheus shows no `vllm:*` series, query the platform one, or just use Grafana, whose datasource is `thanos-querier` and covers both.
 
 ## 2. Open Grafana
 
