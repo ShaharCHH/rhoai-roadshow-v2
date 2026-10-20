@@ -19,7 +19,14 @@ oc get configmap user-workload-monitoring-config -n openshift-user-workload-moni
 oc get route -n observability-hub | grep -i grafana
 ```
 
-Open the route and browse the pre-built dashboards. Generate load from the Playground while you watch.
+Open the route and log in with the Grafana admin credentials:
+
+* **Username:** `rhel`
+* **Password:** `rhel`
+
+> These are the lab's default Grafana admin credentials (set in the `Grafana` custom resource in `observability-hub`). Change them for anything beyond a workshop.
+
+Then browse the pre-built dashboards. Generate load from the Playground while you watch.
 
 ## 3. Metrics worth knowing
 
