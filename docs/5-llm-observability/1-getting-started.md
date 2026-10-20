@@ -49,7 +49,7 @@ If some operators are already installed (for example by OpenShift AI), run only 
 ```bash
 oc get pods -n observability-hub
 oc get pods -n llama-stack      # the namespace may be llama-serve in the kickstart
-oc get podmonitors -n observability-hub
+oc get podmonitors,servicemonitors -A | grep -i -E 'vllm|llama'
 ```
 
 All pods should reach `Running`. The model pod can take several minutes to pull its image and load weights.
