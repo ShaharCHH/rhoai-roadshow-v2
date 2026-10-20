@@ -96,7 +96,16 @@ Make the change in the source Git repository so GitOps does not revert it. Witho
 >   -p '[{"op":"remove","path":"/spec/config/service/telemetry/metrics/address"}]'
 > ```
 >
-> Repeat for any sidecar collectors that still show it. The same applies to list entries, such as an old Prometheus scrape target that is left next to the new one.
+> Repeat for any sidecar collectors that still show it.
+>
+> The same happens with list entries. If you change a Prometheus scrape target's namespace in Git, the policy *adds* the new `scrape_configs` entry and leaves the old one, so the collector now has two jobs with the same name. Prometheus rejects that (`found multiple scrape configs with job name`), and the new pod crash-loops while the old pod keeps running until the rollout succeeds. List the entries, then remove the stale one by its index:
+>
+> ```bash
+> oc get opentelemetrycollector otel-collector -n observability-hub \
+>   -o jsonpath='{.spec.config.receivers.prometheus.config.scrape_configs}'
+> oc patch opentelemetrycollector otel-collector -n observability-hub --type=json \
+>   -p '[{"op":"remove","path":"/spec/config/receivers/prometheus/config/scrape_configs/1"}]'
+> ```
 
 ### Troubleshooting: `no such host` when scraping the model
 
