@@ -4,19 +4,21 @@ A **trace** is the story of one request. It is made of **spans**, each span bein
 
 ## 1. Generate some traffic
 
-Open the **Llama Stack Playground** route in the `llama-serve` namespace:
+Find the **Llama Stack Playground** route. The namespace depends on how your environment was set up (the kickstart uses `llama-serve`, the roadshow clusters use `llama-stack`), so search all namespaces:
 
 ```bash
-oc get route -n llama-serve
+oc get route -A | grep -i playground
 ```
 
-Ask the model a question. Then try one that needs a tool, for example "What is the weather in Paris?", which goes through the weather MCP server.
+Open the URL, ask the model a question, then try one that needs a tool, for example "What is the weather in Paris?", which goes through the weather MCP server.
+
+> **Send a real request before you look for traces.** Without one, the only traces you will find are `health` and `providers` calls that Llama Stack makes on its own. They prove the pipeline works, but they are a single short span and show nothing about a model or tool call. Your chat request is the one with a model span and, for the weather question, a tool span.
 
 ## 2. Find your trace
 
 In the OpenShift console, open **Observe -> Traces** (provided by the distributed tracing UI plugin) and select the Tempo instance in `observability-hub`.
 
-Open a trace and look for:
+Search the last 30 minutes. Open the trace from your own request (not `health` or `providers`) and look for:
 
 * **The slowest span** - this is where the time went.
 * **Parent/child structure** - how Llama Stack called the model server and the MCP tool.

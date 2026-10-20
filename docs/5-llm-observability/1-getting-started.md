@@ -48,7 +48,7 @@ If some operators are already installed (for example by OpenShift AI), run only 
 
 ```bash
 oc get pods -n observability-hub
-oc get pods -n llama-serve
+oc get pods -n llama-stack      # the namespace may be llama-serve in the kickstart
 oc get podmonitors -n observability-hub
 ```
 
@@ -81,5 +81,33 @@ service:
 ```
 
 Make the change in the source Git repository so GitOps does not revert it. Without a running collector, no traces reach Tempo and the next exercises will show nothing.
+
+> **Gotcha - a GitOps fix can leave the old setting behind.** The policy applies these objects with `complianceType: musthave`, which means "these fields must exist", not "the object must match exactly". After you merge a change that *removes* a key (here `address`), the new value (`level: detailed`) is added but the old key stays in the live object, and the collector keeps crashing. Check with:
+>
+> ```bash
+> oc get opentelemetrycollector otel-collector -n observability-hub \
+>   -o jsonpath='{.spec.config.service.telemetry.metrics}{"\n"}'
+> ```
+>
+> If `address` is still listed, remove it once by hand. The policy will not put it back, because the Git definition no longer contains it:
+>
+> ```bash
+> oc patch opentelemetrycollector otel-collector -n observability-hub --type=json \
+>   -p '[{"op":"remove","path":"/spec/config/service/telemetry/metrics/address"}]'
+> ```
+>
+> Repeat for any sidecar collectors that still show it. The same applies to list entries, such as an old Prometheus scrape target that is left next to the new one.
+
+### Troubleshooting: `no such host` when scraping the model
+
+If the collector log repeats `lookup llama3-2-3b-predictor.<namespace>.svc... no such host`, the Prometheus scrape target names a namespace the model is not in. Find where it really runs and compare:
+
+```bash
+oc get inferenceservice -A
+oc get opentelemetrycollector otel-collector -n observability-hub \
+  -o jsonpath='{.spec.config.receivers.prometheus.config.scrape_configs[*].static_configs[*].targets}{"\n"}'
+```
+
+On the roadshow cluster the model runs in `llama-serving`.
 
 Click **Distributed tracing** next.
